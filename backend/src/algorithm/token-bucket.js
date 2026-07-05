@@ -1,105 +1,48 @@
-// limitsync->backend->src->algorithms->token-bucket.js
 
-import redisClient from '../config/redis.js';
 
-class TokenBucket {
-    constructor({
-        capacity,
-        refillRate,
-        keyPrefix = 'rl:tb'
-    }) {
-        this.capacity = capacity;
-        this.refillRate = refillRate;
-        this.keyPrefix = keyPrefix;
+import { run } from "../scripts/luaLoader.js"; 
+
+async function tokenBucket( 
+    redis, 
+    redisKey, 
+    capacity, 
+    refillRate, 
+    requestedTokens = 1 
+) { 
+    if(!redisKey) {
+        throw new Error("redisKey is required");
     }
+    if ( 
+        capacity <= 0 || 
+        refillRate <= 0 || 
+        requestedTokens <= 0 
+    ) { 
+        throw new Error( 
+            "capacity, refillRate, and requestedTokens must be greater than 0" 
+        ); 
+    } 
 
-    async consume(identifier, tokensToConsume = 1) {
-        const key = `${this.keyPrefix}:${identifier}`;
+    const nowMs = Date.now(); 
+    const luaResult = await run( 
+        redis, 
+        "tokenBucket", 
+        [redisKey], 
+        [ 
+            String(capacity), 
+            String(refillRate), 
+            String(requestedTokens), 
+            String(nowMs) 
+        ] 
+    ); 
 
-        const now = Date.now();
+    return { 
+        allowed: luaResult[0] === 1,
+        remaining: Number(luaResult[1]),
+        resetMs: Number(luaResult[2]),
+        retryAfterMs: Number(luaResult[2]),
+        algorithm: "token-bucket", 
+    }; 
 
-        let bucket = await redisClient.get(key);
+} 
 
-        if (!bucket) {
-            bucket = {
-                tokens: this.capacity,
-                lastRefill: now,
-            };
-        } else {
-            bucket = JSON.parse(bucket);
-        }
-
-        const elapsedSeconds =
-            (now - bucket.lastRefill) / 1000;
-
-        const refillTokens =
-            elapsedSeconds * this.refillRate;
-
-        bucket.tokens = Math.min(
-            this.capacity,
-            bucket.tokens + refillTokens
-        );
-
-        bucket.lastRefill = now;
-
-        let allowed = false;
-        let retryAfter = 0;
-
-        if (bucket.tokens >= tokensToConsume) {
-            bucket.tokens -= tokensToConsume;
-            allowed = true;
-        } else {
-            allowed = false;
-
-            const missingTokens =
-                tokensToConsume - bucket.tokens;
-
-            retryAfter = Math.ceil(
-                missingTokens / this.refillRate
-            );
-        }
-
-        await redisClient.set(
-            key,
-            JSON.stringify(bucket)
-        );
-
-        return {
-            allowed,
-            remaining: Math.floor(bucket.tokens),
-            retryAfter,
-            algorithm: 'token-bucket',
-        };
-    }
-
-    async getStatus(identifier) {
-        const key = `${this.keyPrefix}:${identifier}`;
-
-        const bucket = await redisClient.get(key);
-
-        if (!bucket) {
-            return {
-                tokens: this.capacity,
-                capacity: this.capacity,
-                refillRate: this.refillRate,
-            };
-        }
-
-        const data = JSON.parse(bucket);
-
-        return {
-            tokens: Math.floor(data.tokens),
-            capacity: this.capacity,
-            refillRate: this.refillRate,
-            lastRefill: data.lastRefill,
-        };
-    }
-
-    async reset(identifier) {
-        const key = `${this.keyPrefix}:${identifier}`;
-
-        await redisClient.del(key);
-    }
-}
-
-export default TokenBucket;
+export default tokenBucket;
