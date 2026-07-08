@@ -8,6 +8,9 @@ const algorithms = {
 };
 
 function createRateLimiter(redis, plans) {
+    if(!redis) {
+        throw new Error("Redis client must be provided");
+    }
     if(!plans){
         throw new Error("Plans must be provided");
     }
@@ -22,8 +25,15 @@ function createRateLimiter(redis, plans) {
 
         return async function rateLimitMW(req, res, next) {
             try{
-                const planName = planOverride ?? req.user?.plan ?? 'free';
-                const plan = plans[planName] ?? plans.free;
+                const planName = planOverride ?? req.planName ?? 'free';
+                const plan= 
+                    planOverride!=null
+                    ?(plans[planOverride] ?? plans.free)
+                    :req.plan
+                ;
+                if(!plan) {
+                    throw new Error(`Plan not found: ${planName}`);
+                }
 
                 const algorithm = algorithms[plan.algorithm];
                 if(!algorithm) {
