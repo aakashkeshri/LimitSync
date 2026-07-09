@@ -48,7 +48,8 @@ function authenticateApiKey(req, res, next) {
     const record = MOCK_API_KEYS[apiKey];
     if(record) {
         req.apiKey =apiKey;
-        req.user = MOCK_USERS[record.owner];
+        req.apiKeyOwner = record.owner;
+        req.apiKeyPlan = record.plan;
     }
     return next();
 }

@@ -4,7 +4,7 @@ import express from "express";
 import cors from "cors";
 
 import redisClient from "./src/config/redis.js";
-import {loadScripts} from "./src/scripts/lualoader.js";
+import {loadScripts} from "./src/scripts/luaLoader.js";
 import { authenticateJWT, authenticateApiKey } from "./src/middleware/auth.js";
 import apiRouter from "./src/routes/api.js";
 

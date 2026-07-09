@@ -1,6 +1,7 @@
 
 import slidingWindow from '../algorithms/sliding-window.js';
 import  tokenBucket from '../algorithms/token-bucket.js';
+import {getPlanConfig} from '../config/plans.js';
 
 const algorithms = {
     'sliding-window': slidingWindow,
@@ -25,12 +26,9 @@ function createRateLimiter(redis, plans) {
 
         return async function rateLimitMW(req, res, next) {
             try{
-                const planName = planOverride ?? req.planName ?? 'free';
-                const plan= 
-                    planOverride!=null
-                    ?(plans[planOverride] ?? plans.free)
-                    :req.plan
-                ;
+                const planName = planOverride ?? req.user?.plan ?? 'free';
+                const plan= getPlanConfig(planName);
+
                 if(!plan) {
                     throw new Error(`Plan not found: ${planName}`);
                 }

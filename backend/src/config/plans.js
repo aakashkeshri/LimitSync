@@ -15,6 +15,8 @@ const PLANS = {
         burstSize: parseInt(process.env.FREE_PLAN_BURST_SIZE) || 3,
         algorithm: 'sliding-window',
         cooldownPeriod: parseInt(process.env.FREE_PLAN_COOLDOWN_PERIOD) || 60,
+        requests: 5,
+        windowms: 60_000,
 
         abuseRules: {
             maxViolations: 3,
@@ -61,6 +63,8 @@ const PLANS = {
         burstSize: parseInt(process.env.PRO_PLAN_BURST_SIZE) || 20,
         algorithm: 'token-bucket',
         cooldownPeriod: parseInt(process.env.PRO_PLAN_COOLDOWN_PERIOD) || 30,
+        capcity: 20,
+        refillRate: 100/60,
 
         abuseRules: {
             maxViolations: 5,
@@ -107,6 +111,8 @@ const PLANS = {
         burstSize: parseInt(process.env.ENTERPRISE_PLAN_BURST_SIZE) || 100,
         algorithm: 'token-bucket',
         cooldownPeriod: parseInt(process.env.ENTERPRISE_PLAN_COOLDOWN_PERIOD) || 10,
+        capcity: 100,
+        refillRate: 1000/60,
 
         abuseRules: {
             maxViolations: 10,
