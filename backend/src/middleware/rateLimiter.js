@@ -26,7 +26,7 @@ function createRateLimiter(redis, plans) {
 
         return async function rateLimitMW(req, res, next) {
             try{
-                const planName = planOverride ?? req.user?.plan ?? 'free';
+                const planName = planOverride ?? req.user?.plan ?? req.apiKeyPlan ?? 'free';
                 const plan= getPlanConfig(planName);
 
                 if(!plan) {
