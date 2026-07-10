@@ -39,10 +39,12 @@ async function run(redis, name, keys = [], args = []) {
     }
 
     try {
-        return await redis.evalsha(sha, {
-            keys,
-            arguments: args
-        });
+        return await redis.evalsha(
+            sha,
+            keys.length,
+            ...keys,
+            ...args
+        );
     } 
     catch (error) {
         if (error.message.includes("NOSCRIPT")) {
@@ -53,10 +55,9 @@ async function run(redis, name, keys = [], args = []) {
 
             return await redis.evalsha(
                 shaCache[name],
-                {
-                    keys,
-                    arguments: args
-                }
+                keys.length,
+                ...keys,
+                ...args
             );
         }
 

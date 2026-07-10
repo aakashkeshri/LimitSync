@@ -16,7 +16,7 @@ const PLANS = {
         algorithm: 'sliding-window',
         cooldownPeriod: parseInt(process.env.FREE_PLAN_COOLDOWN_PERIOD) || 60,
         requests: 5,
-        windowms: 60_000,
+        windowMs: 60_000,
 
         abuseRules: {
             maxViolations: 3,

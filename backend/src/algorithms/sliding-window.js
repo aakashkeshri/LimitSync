@@ -37,11 +37,12 @@ async function slidingWindow(
         ]
     );
 
+    const resetAt=Number(luaResult[2]);
     return {
         allowed: luaResult[0] === 1,
         remaining: Number(luaResult[1]),
-        resetMs: Number(luaResult[2]),
-        retryAfterMs: Number(luaResult[2]),
+        resetMs: resetAt,
+        retryAfterMs: Math.max(0, resetAt - nowMs),
         algorithm: "sliding-window",
     };
 }
